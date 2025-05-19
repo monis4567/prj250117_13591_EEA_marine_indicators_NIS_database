@@ -187,8 +187,8 @@ usNM <- unique(usNM)
 lstap.f <- list()
 lstap.notF <- list()
 #iterate over elements in list of species'
-pNm <- usNM[1:600]
-#pNm <- usNM
+#pNm <- usNM[1:600]
+pNm <- usNM
 for (i in 1:length(pNm)) {
   # get the species name
   spNm <- pNm[i]

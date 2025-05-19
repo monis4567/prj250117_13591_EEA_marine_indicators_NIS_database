@@ -419,8 +419,27 @@ excl.loc <- c(              "Africa",
                             "Torres Strait",
                             "Ubay",
                             "Venice lagoon",
-                            "Western Bassian"
-                            
+                            "Western Bassian",
+                            #____
+                            "Bahamian",
+                            "Bat Yam",
+                            "Bombay",
+                            "British Overseas Territories",
+                            "Cape of Good Hope",
+                            "Chesapeake Bay",
+                            "Connecticut",
+                            "Goa",
+                            "Circum",
+                            "Nagasaki",
+                            "New Britain",
+                            "Ogasawara Islands",
+                            "Oklahoma",
+                            "Otago region",
+                            "Philippine Exclusive Economic Zone",
+                            "Queensland",
+                            "Rio De Janeiro",
+                            "St. Helena",
+                            "Sudan"
 )
 # paste together in to one vector
 excl.loc.ts <- paste0(excl.loc, collapse = "|")
@@ -442,19 +461,90 @@ dfspcD <- dfspcD[!grepl(excl.loc.ts,dfspcD$locality, ignore.case = TRUE),]
 # get only unique 'locality'
 local.u <- unique(dfspcD$locality)
 local.u <- local.u[order(local.u)]
-length(local.u)
-# write out the table as csv file
+# read in csv -table with higher geography for 'locality'
+det_lc <- read_delim(paste0(file=wdd,"/","locality_details.csv"),
+                     col_names = T,
+                     delim = "\t")
+
+  # write out the table as csv file
 write.table(local.u, paste0(wd00_wd01,"/","table02_locality.csv"),
             row.names = FALSE, sep = ";", fileEncoding = "UTF-8")
-
+#View(dfspcD)
 nrow(dfspcD)
+# use 'left_join' to add the 'Higher_GEO' column to the 'dfspcD' data frame
+# using the 'locality' column as the key
+dfspcD2 <- dfspcD %>%
+  left_join(det_lc, by = c("locality" = "locality"))
+# get the unique 'Higher_GEO' names from the 'det_lc' data frame
+HiGeoReg.u <- unique(dfspcD2$Higher_GEO)
+# order the unique higher geography names
+HiGeoReg.u <- HiGeoReg.u[order(HiGeoReg.u)]
+# get the number of unique higher geography names
+length(HiGeoReg.u)
+dput(HiGeoReg.u)
+# make a vector with European higher geography
+EUHG <- c("Algeria",
+  "Atlantic Europe",
+  "Atlantic Ocean",
+  "Azores",
+  "Baltic Sea",
+  "Estonia",
+  "Baltic Sea",
+  "Latvia",
+  "Baltic Sea",
+  "Poland",
+  "Belgium",
+  "Black Sea",
+  "Canary Islands",
+  "Gran Canaria",
+  "Cape Verde",
+  "Caspian Sea",
+  "Celtic Sea",
+  "Central Europe",
+  "Denmark",
+  "East Atlantic",
+  "Egypt",
+  "England",
+  "Europe",
+  "Finland",
+  "France",
+  "Germany",
+  "Global",
+  "Ireland",
+  "Italy",
+  "Luxembourg",
+  "Madeira",
+  "Mediterranean",
+  "Morocco",
+  "NE Atlantic",
+  "Netherlands",
+  "North Atlantic",
+  "Canary Islands",
+  "North East Atlantic",
+  "North Sea",
+  "Norway",
+  "Poland",
+  "Portugal",
+  "E Europe",
+  "S Europe",
+  "Spain",
+  "Sweden",
+  "Turkey",
+  "Ukraine",
+  "Western Sahara,
+   Cape Verde")
+# use this vector to subset the 'dfspcD2' data frame
+dfspcD2 <- dfspcD2 %>%
+  dplyr::filter(Higher_GEO %in% EUHG)
+
 # write out the table as csv file
-write.table(dfspcD, paste0(wd00_wd01,"/","table03_EUR_geogr_reg.csv"),
+write.table(dfspcD2, paste0(wd00_wd01,"/","table03_EUR_geogr_reg.csv"),
             row.names = FALSE, sep = ";", fileEncoding = "UTF-8")
 
 # get the unique 'ScientificName' names
-spc.u <- unique(dfspcD$ScientificName)
+spc.u <- unique(dfspcD2$ScientificName)
 # order the unique species names
 spc.u <- spc.u[order(spc.u)]
 # count the number of unique species
 length(spc.u)
+#View(dfspcD2)
