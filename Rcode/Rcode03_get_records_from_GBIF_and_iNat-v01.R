@@ -338,7 +338,7 @@ kee <- c("scientific_name",
 lst_spcs <- dfts$scientific_name
 length(lst_spcs)
 # subset the list to only include the first 10 species
-lst_spcs <- lst_spcs[1:4]
+lst_spcs <- lst_spcs[1:6]
 #make an empty list to use for collecting data frame
 lst_tx_gobs <- list()
 #start a growing number
