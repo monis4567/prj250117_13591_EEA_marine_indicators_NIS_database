@@ -545,6 +545,13 @@ write.table(dfspcD2, paste0(wd00_wd01,"/","table03_EUR_geogr_reg.csv"),
 spc.u <- unique(dfspcD2$ScientificName)
 # order the unique species names
 spc.u <- spc.u[order(spc.u)]
+
 # count the number of unique species
 length(spc.u)
+# convert the list of species names to a data frame
+dfspc.u <- as.data.frame(spc.u)
+# write out the table as csv file
+write.table(dfspc.u, paste0(wd00_wd01,"/","table04_EUR_NIS_spc.csv"),
+            row.names = FALSE, sep = ";", fileEncoding = "UTF-8")
+
 #View(dfspcD2)
