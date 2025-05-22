@@ -246,7 +246,12 @@ try.c.iNat <- function(tx, boundslim, endval){
 # 01 end - make trycatch function, in case the genus name is not on GBIF 
 #_________________________
 
-
+# make a random seed number
+rdm.sd.Nmb <- round(runif(1, min = 1, max=3000),0)
+# set this seed number
+set.seed(rdm.sd.Nmb)
+# make a random sleep number
+rdm.splt <- round(runif(1, min = 3, max=30),0)
 # https://github.com/cran/rinat
 #_______________________________________________________________________________
 # nelng cuts on the eastern boundary
@@ -338,7 +343,7 @@ kee <- c("scientific_name",
 lst_spcs <- dfts$scientific_name
 length(lst_spcs)
 # subset the list to only include the first 10 species
-lst_spcs <- lst_spcs[1:6]
+#lst_spcs <- lst_spcs[1:156]
 #make an empty list to use for collecting data frame
 lst_tx_gobs <- list()
 #start a growing number
@@ -348,6 +353,14 @@ for (tx in lst_spcs)
 {
   #  print(tx)}
   print(tx)
+  # # make a random seed number
+  rdm.sd.Nmb <- round(runif(1, min = 1, max=3000),0)
+  # set this seed number
+  set.seed(rdm.sd.Nmb)
+  # make a random sleep number
+  rdm.splt <- round(runif(1, min = 3, max=30),0)
+  # set the system to sleep for a random time
+  Sys.sleep(rdm.splt) # to get different time interval between the requests
   # substitute the underscore
   tx <- gsub("_"," ",tx)
   ## Search for the  species using the boundslimits defined above
@@ -371,28 +384,28 @@ for (tx in lst_spcs)
   # store it as the i'th element 
   lst_tx_gobs[[i]] <- g
   # pad the count number with zeroes to have 5 digits
-  pi <- sprintf("%05d", i)
+  pi <- sprintf("%04d", i)
   # substitute the space with an underscore
   txs <- gsub(" ","_",tx)
   #bind the rows in each list in to one data frame
-  df_g03 <- data.table::rbindlist(lst_tx_gobs, fill=T)
-  df_g03 <- as.data.frame(df_g03)
+  df_g <- as.data.frame(g)
   # if there is no latitude, then omit the row
-  df_g03 <- df_g03[!is.na(df_g03$lat),]
+  # df_g <- df_g[!is.na(df_g$lat),]
   
-  # make a file name
+  ## make a file name
   fn <- paste0("iNat_rec",pi,"_",txs,".csv")
-  #show the file name
+  ##show the file name
   print(fn)
-  # paste the file name together with the output directory
+  ## paste the file name together with the output directory
   fn <- paste0(wd00_wdout,"/",fn)
-  # store the data frame in a csv file
-  write.csv(df_g03, fn, row.names = F, 
+  ## store the data frame in a csv file
+  write.csv(df_g, fn, row.names = F,
             col.names = T, sep = ";")
-  # increase the count of i by one
+  ##increase the count of i by one
   i <- i+1
   # end iteration over  species in the list
 }
+#length(lst_tx_gobs)
 #bind the rows in each list in to one data frame
 df_g03 <- data.table::rbindlist(lst_tx_gobs, fill=T)
 df_g03 <- as.data.frame(df_g03)
@@ -401,6 +414,7 @@ df_g03 <- df_g03[!is.na(df_g03$lat),]
 # copy the column with the scientific name
 df_g03$scientific_name2 <- df_g03$scientific_name
 #View(df_g03)
+#nrow(df_g03)
 # make all columns with numbers numeric using dplyr mutate
 # and convert all other numeric columns
 df_g03 <- df_g03 %>% 
@@ -409,24 +423,9 @@ df_g03 <- df_g03 %>%
                      'taxon_id',
                      'num_identification_agreements',
                      'num_identification_disagreements'), as.numeric)
+# write the df_g03 data frame to a csv file using ';' as delimiter,
+# and including the column names
+fn <- paste0(wd00_wdout,"/iNat_rec_all.csv")
+write_delim(df_g03, fn, 
+          col_names = T, delim = ";")
 
-# #make a ggplot map with facet wrap per scientific name
-# plt_g03 <- ggplot(data = df_g03, aes(x = longitude,
-#                                       y = latitude,
-#                                       colour = scientific_name)) +
-#   geom_polygon(data = map_data("world"),
-#                aes(x = long, y = lat, group = group),
-#                fill = "grey95",
-#                color = "gray40",
-#                linewidth = 0.1) +
-#   geom_point(size = 0.7, alpha = 0.5) +
-#   # coord_fixed(xlim = range(df_iNat01$longitude, na.rm = TRUE),
-#   #             ylim = range(df_iNat01$latitude, na.rm = TRUE)) +
-#   coord_fixed(xlim = c(set_swlng,
-#                        set_nelng) ,
-#               ylim = c(set_swlat,
-#                        set_nelat) ) +
-#   facet_wrap(~scientific_name2) +
-#   theme_bw()
-# # see the plot
-# plt_g03
