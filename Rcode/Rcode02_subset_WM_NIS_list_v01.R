@@ -50,7 +50,21 @@ wdd <- paste0(wd00,"/data")
 # read in the data table prepared in Rcode01
 dfspcD <- read.table(paste0(file=wd00_wd01,"/","table01_all_geogr_reg.csv"),
             header=T,sep = ";", fileEncoding = "UTF-8")
-
+# make a list of the files in the data directory
+lstfd <- list.files(wdd)
+# get the file name that contains the word "non-indigenous"
+lstfd <- lstfd[grepl("non-indigenous", lstfd)]
+# read in the excel file with the NIS
+dfex <- readxl::read_xlsx(paste0(wdd,"/",lstfd),
+                          sheet = 1)
+# read in the excel file with the geographic regions 
+# to compare with the geographical regions in the subsetted NIS list
+lstfd <- list.files(wdd)
+# get the file name that contains the string "WoRMS_HiGeo"
+lstfd <- lstfd[grepl("WoRMSHiGeogr", lstfd)]
+# read in the file with the higher geography regions
+dfRgc <- readxl::read_xlsx(paste0(wdd,"/",lstfd),
+                          sheet = 1)
 #View(dfspcD)
 # get all 'higherGeography' names
 All.HiGeoReg <- unique(dfspcD$higherGeography)
@@ -481,7 +495,7 @@ HiGeoReg.u <- unique(dfspcD2$Higher_GEO)
 HiGeoReg.u <- HiGeoReg.u[order(HiGeoReg.u)]
 # get the number of unique higher geography names
 length(HiGeoReg.u)
-dput(HiGeoReg.u)
+#dput(HiGeoReg.u)
 # make a vector with European higher geography
 EUHG <- c("Algeria",
   "Atlantic Europe",
@@ -537,12 +551,74 @@ EUHG <- c("Algeria",
 dfspcD2 <- dfspcD2 %>%
   dplyr::filter(Higher_GEO %in% EUHG)
 
+# make the column 'ScientificName_accepted' as characters
+dfex$ScientificName_accepted <-as.character(dfex$ScientificName_accepted)
+# convert text string to ASCII and translate the odd 
+# characters - some spaces are not spaces
+# https://character-encoding-decoding.ssojet.com/ascii-in-r/
+dfex$ScientificName_accepted <- iconv(dfex$ScientificName_accepted, from = "UTF-8", to = "ASCII//TRANSLIT")
+# exclude by grep if the 'ScientificName_accepted' does not have a space
+# in the name - if it does not have a space, it is only a genus name
+# and not relevant to use for a species specific evaluation of
+# the different species
+dfex <- dfex[grepl(" ",dfex$ScientificName_accepted),]
+# substitute the '-' in the colnames with '_'
+colnames(dfex) <- gsub("-", "_", colnames(dfex))
+# from the dfex data frame only keep the columns
+dfex2 <- dfex %>% dplyr::select( ScientificName_accepted,
+                        Year,
+                        Subregion,              
+                        Region,
+                        Period, REL, EC, TC, TS_Other,
+                        TS_ball, TS_hull, 
+                        COR, UNA, UNK, Total, 
+                        Pathway_Probability)
+#View(dfex2)
+#colnames(dfex)
+#View(dfspcD2)
+# check the geography regions in the 2 data frames
+ulcD2 <- unique(dfspcD2$locality)
+uHGD2 <- unique(dfspcD2$higherGeography)
+# ulce2 <- unique(dfex$Region)
+uHGe2 <- unique(dfex$Subregion)
+#View(dfRgc)
+# use the 'dfRgc' to pair with the 'dfspcD2' data frame to get 
+# the 'RGex2' and 'SbRGex2' columns added to the 'dfspcD2' data frame, 
+# using left_join
+dfspcD3 <- dfspcD2 %>%
+  dplyr::left_join(dfRgc, 
+    by = c("locality" = "HiGeoD2"))
+
+# use dplyr left_join to add the 'dfex2' data frame to the 'dfspcD2' data frame
+# using the 'ScientificName_accepted' column as the key in the
+# dfex2 data frame and the 'ScientificName' column in the
+# dfspcD3 data frame
+# While also using the "SbRGex2" (column in the 'dfspcD3')
+# to match with the "Subregion" (column in the 'dfex2'), 
+# and using the "RGex2" (column in the 'dfspcD3')
+# to match with the "Region" (column in the 'dfex2') data frame
+# see this example https://stackoverflow.com/questions/26611717/can-dplyr-join-on-multiple-columns-or-composite-key
+# the dfspcD3 data frame unfortunately has many NAs for "SbRGex2"
+# and for the "RGex2" columns, which will result in many added columns
+# will be empty (contain NAs) This is a result of the 'dfex2' data frame
+# not having a early curation for each species and geographic region
+# as that can match with the df obtained from WoRMS. The 'dfex2' data frame
+# origunates from the EEA NIS list, which is not a complete list, and 
+# was not originally compiled from WoRMS
+dfspcD3 <- dplyr::left_join(dfspcD3, dfex2, 
+          by = c("ScientificName" = "ScientificName_accepted",
+                 "SbRGex2" = "Subregion",
+                 "RGex2" = "Region"))
+# keep only the unique rows
+nrow(dfspcD3)
+dfspcD3 <- dfspcD3 %>% dplyr::distinct()
+nrow(dfspcD3)
 # write out the table as csv file
-write.table(dfspcD2, paste0(wd00_wd01,"/","table03_EUR_geogr_reg.csv"),
+write.table(dfspcD3, paste0(wd00_wd01,"/","table03_EUR_geogr_reg.csv"),
             row.names = FALSE, sep = ";", fileEncoding = "UTF-8")
 
 # get the unique 'ScientificName' names
-spc.u <- unique(dfspcD2$ScientificName)
+spc.u <- unique(dfspcD3$ScientificName)
 # order the unique species names
 spc.u <- spc.u[order(spc.u)]
 
@@ -550,6 +626,7 @@ spc.u <- spc.u[order(spc.u)]
 length(spc.u)
 # convert the list of species names to a data frame
 dfspc.u <- as.data.frame(spc.u)
+
 # write out the table as csv file
 write.table(dfspc.u, paste0(wd00_wd01,"/","table04_EUR_NIS_spc.csv"),
             row.names = FALSE, sep = ";", fileEncoding = "UTF-8")
