@@ -19,14 +19,16 @@ marine_regions <- c(
 
 ui <- fluidPage(
   theme = shinytheme("superhero"),
-  ?titlePanel("WoRMS AphiaID finder for nonindigenous marine species in Europe"),
+  titlePanel("WoRMS AphiaID finder for nonindigenous marine species in Europe"),
   sidebarLayout(
     sidebarPanel(
-      textInput("species", "Enter Latin species name:", value = "Crassostrea gigas"),
+      textInput("species", "Enter Latin species name:", 
+                value = "Crassostrea gigas"),
       numericInput("year", "Enter year found:", 
                    value = 2024, min = 1800, 
                    max = as.numeric(format(Sys.Date(), "%Y"))),
-      selectInput("region", "Select marine region:", choices = marine_regions),
+      selectInput("region", "Select marine region:", 
+                  choices = marine_regions),
       actionButton("search", "Search")
     ),
     mainPanel(
@@ -99,4 +101,4 @@ sserver <- function(input, output, session) {
 }
 
 # Run the Shiny app
-shinyApp(ui = ui, server = server)
+shinyApp(ui = ui, server = sserver)
